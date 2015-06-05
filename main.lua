@@ -36,7 +36,9 @@ tmr.alarm(1,1000, 1, function()
 			if data ~= nil then
 				print(data)
 			end
-			if topic == "/gpio/"..clientID.."/0" then
+			if topic == "/reset/"..clientID then
+				node.restart()
+			elseif topic == "/gpio/"..clientID.."/0" then
 				if data == "0" then
 					gpio.write(GPIO0, gpio.LOW)
 				else
@@ -54,13 +56,17 @@ tmr.alarm(1,1000, 1, function()
 		m:connect( broker , mqttport, 0,
 		function(conn)
     		print("Connected to MQTT:" .. broker .. ":" .. mqttport .." as " .. clientID )
-			m:subscribe("/gpio/"..clientID.."/0",0, 
+			m:subscribe("/reset/"..clientID,0, 
 			function(conn)
-				print("GPIO0 subscribe success") 
-			m:subscribe("/gpio/"..clientID.."/2",0, 
-			function(conn)
-				print("GPIO2 subscribe success") 
-            end)
+				print("reset subscribe success") 
+				m:subscribe("/gpio/"..clientID.."/0",0, 
+				function(conn)
+					print("GPIO0 subscribe success") 
+					m:subscribe("/gpio/"..clientID.."/2",0, 
+					function(conn)
+						print("GPIO2 subscribe success") 
+					end)
+            	end)
             end)
 		end)
 
