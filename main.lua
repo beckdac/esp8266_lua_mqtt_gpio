@@ -36,7 +36,9 @@ tmr.alarm(1,1000, 1, function()
 			if data ~= nil then
 				print(data)
 			end
-			if topic == "/reset/"..clientID then
+			if topic == "/reset" then
+				node.restart()
+			elseif topic == "/reset/"..clientID then
 				node.restart()
 			elseif topic == "/gpio/"..clientID.."/0" then
 				if data == "0" then
@@ -56,20 +58,28 @@ tmr.alarm(1,1000, 1, function()
 		m:connect( broker , mqttport, 0,
 		function(conn)
     		print("Connected to MQTT:" .. broker .. ":" .. mqttport .." as " .. clientID )
-			m:subscribe("/reset/"..clientID,0, 
-			function(conn)
-				print("reset subscribe success") 
-				m:subscribe("/gpio/"..clientID.."/0",0, 
+--			m:subscribe("/reset",0,
+--		  	function(conn)
+--              print("general reset subscribe success")
+				m:subscribe("/reset/"..clientID,0, 
 				function(conn)
-					print("GPIO0 subscribe success") 
-					m:subscribe("/gpio/"..clientID.."/2",0, 
+					print("reset subscribe success") 
+					m:publish("/node", '{ "node": "'..clientID..'", "features": [ "reset", "gpio/0", "gpio/2" ] }', 0, 0,
 					function(conn)
-						print("GPIO2 subscribe success") 
-					end)
-            	end)
-            end)
+				    	print("published clientID and features to /node")
+					   	m:subscribe("/gpio/"..clientID.."/0",0, 
+						function(conn)
+							print("GPIO0 subscribe success") 
+							m:subscribe("/gpio/"..clientID.."/2",0, 
+							function(conn)
+								print("GPIO2 subscribe success") 
+							end)
+						end)
+           			end)
+				end)
+--        	end)
 		end)
-
+	
 	-- initial timer
     end 
 end)
